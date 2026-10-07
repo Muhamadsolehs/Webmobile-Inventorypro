@@ -706,6 +706,57 @@ const App = {
     if (notifDot) notifDot.style.display = lowCount > 0 ? 'block' : 'none';
   },
 
+  // Perhitungan Keuangan & Total Penjualan Barang (Khusus Role Keuangan & Admin)
+  calculateFinancials() {
+    const items = this.state.items || [];
+    const mutations = this.state.mutations || [];
+
+    const itemMap = new Map();
+    items.forEach(it => {
+      itemMap.set(it.id, it);
+      if (it.name) itemMap.set(it.name.toLowerCase(), it);
+    });
+
+    let totalSalesNominal = 0;
+    let totalSalesVolume = 0;
+    let totalSalesProfit = 0;
+    let totalSalesTxCount = 0;
+
+    mutations.forEach(m => {
+      if (m.type === 'out') {
+        const item = itemMap.get(m.itemId) || itemMap.get((m.itemName || '').toLowerCase());
+        const sellPrice = item ? (Number(item.sellPrice) || 0) : 0;
+        const buyPrice = item ? (Number(item.buyPrice) || 0) : 0;
+        const qty = Number(m.qty) || 0;
+
+        const subtotal = qty * sellPrice;
+        const profit = qty * (sellPrice - buyPrice);
+
+        totalSalesNominal += subtotal;
+        totalSalesVolume += qty;
+        totalSalesProfit += profit;
+        totalSalesTxCount += 1;
+      }
+    });
+
+    let totalStockSalesPotential = 0;
+    let totalStockCostAsset = 0;
+    items.forEach(it => {
+      const stock = Number(it.stock) || 0;
+      totalStockSalesPotential += stock * (Number(it.sellPrice) || 0);
+      totalStockCostAsset += stock * (Number(it.buyPrice) || 0);
+    });
+
+    return {
+      totalSalesNominal,
+      totalSalesVolume,
+      totalSalesProfit,
+      totalSalesTxCount,
+      totalStockSalesPotential,
+      totalStockCostAsset
+    };
+  },
+
   // Render Dashboard
   renderDashboard() {
     const items = this.state.items;
@@ -731,6 +782,32 @@ const App = {
     if (elLowStock) elLowStock.textContent = lowStockCount;
     if (elTotalAsset) elTotalAsset.textContent = formattedAsset;
     if (elTodayMovements) elTodayMovements.textContent = todayMovements;
+
+    // Metrik Finansial & Total Penjualan (Untuk Role Auditor & Keuangan / Admin)
+    const fin = this.calculateFinancials();
+    const elSalesRp = document.getElementById('valTotalSalesRp');
+    const elSalesCount = document.getElementById('valTotalSalesCount');
+    const elSalesVolume = document.getElementById('valSalesVolume');
+    const elSalesProfit = document.getElementById('valSalesProfit');
+    const elSalesPotential = document.getElementById('valTotalSalesPotential');
+
+    if (elSalesRp) {
+      elSalesRp.textContent = `Rp ${Number(fin.totalSalesNominal).toLocaleString('id-ID')}`;
+    }
+    if (elSalesCount) {
+      elSalesCount.textContent = `Dari ${fin.totalSalesTxCount} transaksi barang keluar tercatat`;
+    }
+    if (elSalesVolume) {
+      elSalesVolume.textContent = `${fin.totalSalesVolume} Unit`;
+    }
+    if (elSalesProfit) {
+      elSalesProfit.textContent = `+Rp ${Number(fin.totalSalesProfit).toLocaleString('id-ID')}`;
+    }
+    if (elSalesPotential) {
+      elSalesPotential.textContent = fin.totalStockSalesPotential >= 1000000
+        ? `Rp ${(fin.totalStockSalesPotential / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} Jt`
+        : `Rp ${Number(fin.totalStockSalesPotential).toLocaleString('id-ID')}`;
+    }
 
     if (lowStockBanner) {
       if (lowStockCount > 0) {
@@ -874,6 +951,13 @@ const App = {
 
     const formattedPrice = `Rp ${Number(item.sellPrice || 0).toLocaleString('id-ID')}`;
     const canAdjust = typeof RBAC !== 'undefined' ? RBAC.can('items:adjust_stock', this.state.currentUser) : true;
+    const canViewFinance = typeof RBAC !== 'undefined' ? RBAC.can('finance:view', this.state.currentUser) : true;
+    const itemValuation = (Number(item.stock) || 0) * (Number(item.sellPrice) || 0);
+    const valuationHtml = canViewFinance ? `
+      <span class="finance-item-valuation" title="Total Potensi Penjualan Seluruh Stok (${item.stock} ${item.unit} x ${formattedPrice})">
+        Valuasi: Rp ${itemValuation.toLocaleString('id-ID')}
+      </span>
+    ` : '';
 
     const stepperHtml = canAdjust ? `
       <div class="stock-stepper-control">
@@ -926,6 +1010,7 @@ const App = {
           <div class="item-price-block">
             <span class="price-label">Harga Jual</span>
             <span class="price-value">${formattedPrice}</span>
+            ${valuationHtml}
           </div>
 
           ${stepperHtml}
@@ -1047,6 +1132,44 @@ const App = {
           <div class="spec-box-val" style="font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.supplier || '-'}</div>
         </div>
       </div>
+
+      ${(() => {
+        const canViewFinance = typeof RBAC !== 'undefined' ? RBAC.can('finance:view', this.state.currentUser) : true;
+        if (!canViewFinance) return '';
+        const stockQty = Number(item.stock) || 0;
+        const sPrice = Number(item.sellPrice) || 0;
+        const bPrice = Number(item.buyPrice) || 0;
+        const totalPotentialSales = stockQty * sPrice;
+        const totalEstimatedProfit = stockQty * (sPrice - bPrice);
+        const unitMargin = sPrice - bPrice;
+
+        return `
+          <div class="finance-detail-box">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 11px; font-weight: 700; color: #6D28D9; text-transform: uppercase; letter-spacing: 0.04em;">Ringkasan Finansial Stok</span>
+              <span class="finance-badge" style="font-size: 10px; padding: 2px 7px;">Role Keuangan</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div>
+                <span style="font-size: 10px; color: var(--text-muted); display: block;">Total Valuasi Jual:</span>
+                <strong style="font-size: 13.5px; color: #5B21B6; font-family: var(--font-mono, monospace);">Rp ${totalPotentialSales.toLocaleString('id-ID')}</strong>
+              </div>
+              <div>
+                <span style="font-size: 10px; color: var(--text-muted); display: block;">Potensi Margin Laba:</span>
+                <strong style="font-size: 13.5px; color: #059669; font-family: var(--font-mono, monospace);">+Rp ${totalEstimatedProfit.toLocaleString('id-ID')}</strong>
+              </div>
+              <div>
+                <span style="font-size: 10px; color: var(--text-muted); display: block;">Margin per Satuan:</span>
+                <span style="font-size: 11.5px; font-weight: 600; color: var(--text-main); font-family: var(--font-mono, monospace);">Rp ${unitMargin.toLocaleString('id-ID')} / ${item.unit}</span>
+              </div>
+              <div>
+                <span style="font-size: 10px; color: var(--text-muted); display: block;">Total Modal Stok:</span>
+                <span style="font-size: 11.5px; font-weight: 600; color: var(--text-main); font-family: var(--font-mono, monospace);">Rp ${(stockQty * bPrice).toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      })()}
 
       <div class="barcode-visual">
         <div class="barcode-stripes"></div>
@@ -1650,6 +1773,17 @@ const App = {
     const container = document.getElementById('fullMutationsList');
     if (!container) return;
 
+    // Metrik Finansial Mutasi Keluar (Khusus Akses Keuangan & Admin)
+    const fin = this.calculateFinancials();
+    const elMutTotal = document.getElementById('valMutationTotalSales');
+    const elMutCount = document.getElementById('valMutationSalesCount');
+    if (elMutTotal) {
+      elMutTotal.textContent = `Rp ${Number(fin.totalSalesNominal).toLocaleString('id-ID')}`;
+    }
+    if (elMutCount) {
+      elMutCount.textContent = `${fin.totalSalesTxCount} transaksi keluar (${fin.totalSalesVolume} unit terjual)`;
+    }
+
     let filtered = [...this.state.mutations];
     if (this.state.mutationFilter !== 'all') {
       filtered = filtered.filter(m => m.type === this.state.mutationFilter);
@@ -1684,6 +1818,23 @@ const App = {
       ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`
       : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 
+    // Hitung nominal Rupiah penjualan jika tipe mutasi 'out' (Barang Keluar)
+    let financeNominalHtml = '';
+    const canViewFinance = typeof RBAC !== 'undefined' ? RBAC.can('finance:view', this.state.currentUser) : true;
+    if (isOut && canViewFinance) {
+      const item = (this.state.items || []).find(it => it.id === mutation.itemId || (it.name && it.name.toLowerCase() === (mutation.itemName || '').toLowerCase()));
+      const sellPrice = item ? (Number(item.sellPrice) || 0) : 0;
+      const subtotal = (Number(mutation.qty) || 0) * sellPrice;
+      if (subtotal > 0) {
+        financeNominalHtml = `
+          <div class="mutation-nominal-pill" title="Total Nilai Penjualan Mutasi Keluar Ini: ${mutation.qty} x Rp ${sellPrice.toLocaleString('id-ID')}">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span>Penjualan: Rp ${subtotal.toLocaleString('id-ID')}</span>
+          </div>
+        `;
+      }
+    }
+
     return `
       <div class="mutation-card">
         <div class="mutation-indicator ${indicatorClass}">
@@ -1695,6 +1846,7 @@ const App = {
             <span class="mutation-qty ${qtyClass}">${qtySign}${mutation.qty} ${mutation.unit}</span>
           </div>
           <p class="mutation-note">${mutation.note || '-'}</p>
+          ${financeNominalHtml}
           <div class="mutation-footer">
             <span>${mutation.date} • Dicatat oleh: <strong>${mutation.user || 'Staf'}</strong></span>
             <span>${mutation.reference || '-'}</span>
@@ -2163,21 +2315,30 @@ const App = {
         el.classList.contains('btn-add-item-aligned') ||
         (el.textContent && el.textContent.toLowerCase().includes('tambah'));
 
+      const isFinanceView = perm === 'finance:view' || perm.includes('finance');
+
       if (!allowed) {
-        if (isCreateOrAdd) {
+        if (isCreateOrAdd || isFinanceView) {
           el.style.display = 'none';
         } else {
           el.classList.add('action-locked');
           el.setAttribute('title', RBAC.getDenialReason(perm, user.roleCode));
         }
       } else {
-        if (isCreateOrAdd) {
+        if (isCreateOrAdd || isFinanceView) {
           el.style.display = '';
         }
         el.classList.remove('action-locked');
         el.removeAttribute('title');
       }
     });
+
+    // Kontrol Khusus Tampilan Finansial & Total Penjualan (Auditor/Keuangan & Admin)
+    const canViewFinance = RBAC.can('finance:view', user);
+    const financeSalesCard = document.getElementById('financeSalesCard');
+    if (financeSalesCard) financeSalesCard.style.display = canViewFinance ? 'block' : 'none';
+    const mutationsFinanceBanner = document.getElementById('mutationsFinanceBanner');
+    if (mutationsFinanceBanner) mutationsFinanceBanner.style.display = canViewFinance ? 'flex' : 'none';
 
     // 2. Tombol-tombol Tambah Data Spesifik di Setiap Halaman
     // A. Tambah Master Barang Baru (#btnAddNewItem, #btnQuickAddItem, #btnTopAddNewItem)
@@ -2255,6 +2416,12 @@ const App = {
     if (!container || typeof RBAC === 'undefined') return;
 
     const matrixRows = [
+      {
+        category: 'Keuangan & Analisis Penjualan',
+        items: [
+          { perm: 'finance:view', label: 'Lihat Total Penjualan & Nilai Nominal (Rp)' }
+        ]
+      },
       {
         category: 'Inventaris & Master Barang',
         items: [

@@ -359,6 +359,21 @@
                 </button>
               </div>
 
+              <!-- Rekap Penjualan (Khusus Akses Keuangan & Admin) -->
+              <div class="finance-summary-bar" id="mutationsFinanceBanner" data-rbac-perm="finance:view">
+                <div class="finance-summary-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                </div>
+                <div class="finance-summary-details">
+                  <span class="finance-summary-title">Total Penjualan Barang Keluar</span>
+                  <div class="finance-summary-amount" id="valMutationTotalSales">Rp 0</div>
+                  <span class="finance-summary-sub" id="valMutationSalesCount">0 transaksi keluar</span>
+                </div>
+              </div>
+
               <!-- Mutation Filter Tabs -->
               <div class="filter-pills-row" id="mutationFilterTabs">
                 <button class="filter-pill active" data-type="all">Semua Mutasi</button>

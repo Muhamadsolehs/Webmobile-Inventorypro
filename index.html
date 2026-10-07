@@ -353,6 +353,41 @@
               <!-- Role & Permission Summary Card (RBAC Live Feedback) -->
               <div id="userPermissionSummary" style="margin-bottom: 14px;"></div>
 
+              <!-- Rekapitulasi Keuangan & Penjualan (Khusus Akses Keuangan & Admin) -->
+              <div class="finance-sales-card" id="financeSalesCard" data-rbac-perm="finance:view">
+                <div class="finance-card-header">
+                  <div class="finance-badge">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="12" y1="1" x2="12" y2="23"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <span>Ringkasan Finansial</span>
+                  </div>
+                  <span class="finance-role-tag">Akses Auditor & Keuangan</span>
+                </div>
+
+                <div class="finance-main-nominal">
+                  <span class="finance-label">Total Penjualan Barang</span>
+                  <div class="finance-amount" id="valTotalSalesRp">Rp 0</div>
+                  <span class="finance-subtext" id="valTotalSalesCount">Memuat data penjualan...</span>
+                </div>
+
+                <div class="finance-stats-row">
+                  <div class="finance-stat-item">
+                    <span class="stat-item-label">Barang Terjual</span>
+                    <span class="stat-item-val" id="valSalesVolume">0 Unit</span>
+                  </div>
+                  <div class="finance-stat-item">
+                    <span class="stat-item-label">Estimasi Margin</span>
+                    <span class="stat-item-val" id="valSalesProfit" style="color: #059669;">Rp 0</span>
+                  </div>
+                  <div class="finance-stat-item">
+                    <span class="stat-item-label">Valuasi Jual Stok</span>
+                    <span class="stat-item-val" id="valTotalSalesPotential">Rp 0</span>
+                  </div>
+                </div>
+              </div>
+
               <!-- Critical Stock Alert Banner -->
               <div class="alert-banner" id="lowStockBanner">
                 <div class="alert-banner-content">

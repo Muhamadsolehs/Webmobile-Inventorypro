@@ -35,8 +35,8 @@ const RBAC = {
       name: 'Auditor & Keuangan',
       badgeColor: '#7C3AED',
       bgLight: '#F5F3FF',
-      description: 'Audit & pengawasan finansial: Hak akses BACA-SAJA ke seluruh inventaris, nilai aset, log mutasi, dan ekspor laporan CSV.',
-      tag: 'Hanya Lihat & Audit (Read-Only)'
+      description: 'Audit & pengawasan finansial: Akses khusus melihat total penjualan barang, rekap omzet dalam Rupiah, audit mutasi, valuasi aset, dan ekspor laporan.',
+      tag: 'Akses Keuangan & Audit'
     }
   },
 
@@ -62,7 +62,8 @@ const RBAC = {
       'users:delete': true,
       'users:switch': true,
       'system:reset': true,
-      'system:export': true
+      'system:export': true,
+      'finance:view': true // Akses total penjualan & nominal finansial
     },
     supervisor: {
       'items:view': true,
@@ -84,7 +85,8 @@ const RBAC = {
       'users:delete': false,
       'users:switch': true,
       'system:reset': false, // Tidak boleh reset sistem
-      'system:export': true
+      'system:export': true,
+      'finance:view': true // Supervisor operasional boleh pantau penjualan
     },
     staff: {
       'items:view': true,
@@ -106,7 +108,8 @@ const RBAC = {
       'users:delete': false,
       'users:switch': true,
       'system:reset': false,
-      'system:export': false
+      'system:export': false,
+      'finance:view': false // Staf lapangan tidak melihat nominal omzet & keuntungan
     },
     auditor: {
       'items:view': true,
@@ -128,7 +131,8 @@ const RBAC = {
       'users:delete': false,
       'users:switch': true,
       'system:reset': false,
-      'system:export': true
+      'system:export': true,
+      'finance:view': true // Fitur Utama Keuangan: Melihat Total Penjualan & Nominal Rp
     }
   },
 
@@ -176,7 +180,8 @@ const RBAC = {
       'users:delete': `Penghapusan akun staf hanya dapat dilakukan oleh Admin Gudang.`,
       'reports:export': `Akun ${roleInfo.name} tidak memiliki wewenang mengunduh data laporan CSV.`,
       'system:export': `Akun ${roleInfo.name} tidak memiliki wewenang mengunduh data laporan CSV.`,
-      'system:reset': `Fitur Reset Data Demo hanya dapat diakses oleh Admin Gudang.`
+      'system:reset': `Fitur Reset Data Demo hanya dapat diakses oleh Admin Gudang.`,
+      'finance:view': `Informasi omzet penjualan dan laporan finansial hanya dapat diakses oleh peran Auditor & Keuangan atau Admin.`
     };
     return messages[normalizedAction] || messages[action] || `Akses dibatasi untuk peran ${roleInfo.name}.`;
   },
