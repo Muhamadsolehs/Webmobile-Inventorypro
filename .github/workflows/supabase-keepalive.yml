@@ -1,0 +1,41 @@
+name: Supabase Database Keep-Alive (Anti-Pause)
+
+# ==============================================================================
+# ALUR KERJA GITHUB ACTIONS UNTUK MENJAGA DATABASE SUPABASE TETAP AKTIF
+# Supabase mempause project free tier jika tidak ada aktivitas selama 7 hari.
+# Workflow ini akan berjalan otomatis setiap 2 hari untuk mengirim query ringan
+# sehingga Supabase selalu mendeteksi aktivitas aktif 24/7.
+# ==============================================================================
+
+on:
+  schedule:
+    # Berjalan setiap 2 hari sekali pada jam 04:00 UTC (11:00 WIB)
+    - cron: '0 4 */2 * *'
+  workflow_dispatch: # Memungkinkan tombol manual "Run workflow" di GitHub Actions
+
+jobs:
+  keep-alive:
+    name: Ping Supabase PostgreSQL REST
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Heartbeat Request to Supabase
+        run: |
+          echo "Memulai heartbeat ping ke Supabase..."
+          
+          # Gunakan URL & Key dari Secrets GitHub atau fallback ke default project
+          SUPABASE_URL="${{ secrets.SUPABASE_URL || 'https://vbtwmofzdghdfbceoagb.supabase.co' }}"
+          SUPABASE_KEY="${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_UkJd-QJG6wWbk2zBt_cINg_vVs-HbbL' }}"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/warehouses?select=id&limit=1")
+          
+          echo "Hasil Respon HTTP: $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 206 ]; then
+            echo "✅ Heartbeat BERHASIL! Database Supabase aktif dan terhindar dari pause."
+          else
+            echo "⚠️ Peringatan: Respon HTTP adalah $HTTP_STATUS. Cek kredensial Anda."
+            exit 1
+          fi

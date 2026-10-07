@@ -1,0 +1,243 @@
+/**
+ * Role-Based Access Control (RBAC) & Multi-Role Stylesheet
+ * Desain modern, bersih, dan informatif untuk manajemen hak akses
+ */
+
+/* Role Badges */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2.5px 8.5px;
+  border-radius: var(--radius-pill);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.role-badge.role-admin {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.role-badge.role-supervisor {
+  background-color: #ECFDF5;
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.25);
+}
+
+.role-badge.role-staff {
+  background-color: #FFFBEB;
+  color: #D97706;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+}
+
+.role-badge.role-auditor {
+  background-color: #F5F3FF;
+  color: #7C3AED;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+[data-theme="dark"] .role-badge.role-admin {
+  background-color: rgba(37, 99, 235, 0.15);
+  color: #60A5FA;
+  border-color: rgba(96, 165, 250, 0.3);
+}
+
+[data-theme="dark"] .role-badge.role-supervisor {
+  background-color: rgba(5, 150, 105, 0.15);
+  color: #34D399;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+[data-theme="dark"] .role-badge.role-staff {
+  background-color: rgba(217, 119, 6, 0.15);
+  color: #FBBF24;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .role-badge.role-auditor {
+  background-color: rgba(124, 58, 237, 0.15);
+  color: #A78BFA;
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+/* Role Banner / Indicator in Header & Profile */
+.current-role-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 11px;
+}
+
+.current-role-indicator .role-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+}
+
+/* Restricted Action / Lock State */
+.action-locked {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+  position: relative;
+}
+
+.action-locked:hover {
+  filter: brightness(0.95);
+}
+
+.btn-lock-icon {
+  margin-left: 2px;
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  opacity: 0.7;
+}
+
+/* RBAC Permission Matrix Table */
+.rbac-matrix-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  margin-top: 10px;
+}
+
+.rbac-matrix-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rbac-matrix-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.rbac-matrix-subtitle {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.rbac-matrix-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+.rbac-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  text-align: left;
+}
+
+.rbac-matrix-table th,
+.rbac-matrix-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.rbac-matrix-table th {
+  background-color: var(--bg-app);
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.rbac-matrix-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rbac-matrix-table tbody tr:hover {
+  background-color: var(--bg-hover);
+}
+
+.perm-cell {
+  text-align: center;
+}
+
+.perm-granted {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #ECFDF5;
+  color: #059669;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+[data-theme="dark"] .perm-granted {
+  background-color: rgba(5, 150, 105, 0.2);
+  color: #34D399;
+}
+
+.perm-denied {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: var(--bg-subtle);
+  color: var(--text-subtle);
+  font-size: 12px;
+}
+
+/* Role Description Cards */
+.role-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.role-info-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.role-info-card:hover {
+  border-color: var(--text-subtle);
+  transform: translateY(-1px);
+}
+
+.role-info-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.role-info-card p {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
