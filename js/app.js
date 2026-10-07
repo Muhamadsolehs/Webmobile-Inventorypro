@@ -422,13 +422,14 @@ const App = {
       });
     }
 
-    // Switch User triggers
-    const btnHeaderUserPill = document.getElementById('btnHeaderUserPill');
-    const sidebarUserCard = document.getElementById('sidebarUserCard');
-    const settingItemActiveUser = document.getElementById('settingItemActiveUser');
-    if (btnHeaderUserPill) btnHeaderUserPill.addEventListener('click', () => this.openSwitchUserModal());
-    if (sidebarUserCard) sidebarUserCard.addEventListener('click', () => this.openSwitchUserModal());
-    if (settingItemActiveUser) settingItemActiveUser.addEventListener('click', () => this.openSwitchUserModal());
+    // Profile & Switch User triggers (Header Pill, Sidebar User Card, Settings User Row)
+    const profileClickElements = document.querySelectorAll('#btnHeaderUserPill, .user-switch-pill, #sidebarUserCard, .sidebar-user-card, #settingItemActiveUser');
+    profileClickElements.forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openSwitchUserModal();
+      });
+    });
 
     // View All Mutations link
     const linkViewAllMutations = document.getElementById('linkViewAllMutations');
@@ -1564,35 +1565,144 @@ const App = {
 
   openSwitchUserModal() {
     const sheet = document.getElementById('sheetSwitchUser') || document.getElementById('sheetSwitchUserModal');
-    const container = document.getElementById('switchUserListContainer') || document.getElementById('userSelectionList');
     const backdrop = document.getElementById('sheetBackdrop');
     if (!sheet || !backdrop) return;
 
-    if (container) {
-      const currentId = this.state.currentUser ? this.state.currentUser.id : '';
-      container.innerHTML = this.state.users.map(user => {
-        const isCurrent = user.id === currentId;
-        return `
-          <div class="settings-item" onclick="App.switchUser('${user.id}')" style="cursor: pointer; ${isCurrent ? 'background: rgba(37,99,235,0.06); font-weight: 600;' : ''}">
-            <div class="settings-item-info">
-              <div class="avatar-circle" style="background-color: ${user.color || '#2563EB'}; width: 34px; height: 34px;">
-                ${user.initials || 'U'}
-              </div>
-              <div class="settings-item-text">
-                <h4>${user.name} ${isCurrent ? '• (Aktif)' : ''}</h4>
-                <p>${user.role} • ${user.email}</p>
-              </div>
+    const currentUser = this.state.currentUser || (this.state.users && this.state.users[0]) || {
+      name: 'Pengguna Aktif',
+      role: 'Admin Gudang',
+      email: 'admin@gudang.id',
+      initials: 'AG',
+      color: '#2563EB'
+    };
+
+    const currentId = currentUser.id || '';
+
+    // Generate list of users for switching
+    const usersListHtml = (this.state.users || []).map(user => {
+      const isCurrent = user.id === currentId;
+      return `
+        <div class="settings-item user-switch-row" onclick="App.switchUser('${user.id}')" style="cursor: pointer; padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid ${isCurrent ? 'var(--brand-primary)' : 'var(--border-light)'}; ${isCurrent ? 'background: rgba(37,99,235,0.06);' : 'background: var(--bg-surface);'}; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; transition: all 0.15s ease;">
+          <div class="settings-item-info" style="display: flex; align-items: center; gap: 10px;">
+            <div class="avatar-circle" style="background-color: ${user.color || '#2563EB'}; width: 34px; height: 34px; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;">
+              ${user.initials || 'U'}
             </div>
-            <div class="settings-item-right">
-              ${isCurrent ? '<span class="status-badge safe">Aktif</span>' : '<span style="color: var(--brand-primary); font-size: 12px; font-weight: 600;">Pilih</span>'}
+            <div class="settings-item-text" style="line-height: 1.25;">
+              <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: var(--text-heading);">${user.name}</h4>
+              <p style="margin: 2px 0 0; font-size: 11px; color: var(--text-muted);">${user.role} • ${user.email}</p>
             </div>
           </div>
-        `;
-      }).join('');
-    }
+          <div class="settings-item-right">
+            ${isCurrent 
+              ? '<span class="status-badge safe" style="font-size: 11px; padding: 2px 8px;">Aktif</span>' 
+              : '<span class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px; pointer-events: none;">Pilih</span>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    sheet.innerHTML = `
+      <div class="sheet-handle-bar"><div class="sheet-handle"></div></div>
+      <div class="sheet-header" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; border-bottom: 1px solid var(--border-light);">
+        <span class="sheet-title" style="font-size: 15px; font-weight: 700; color: var(--text-heading);">Profil & Akun Pengguna</span>
+        <button class="sheet-close-btn" id="btnCloseSwitchUserSheet" onclick="App.closeAllSheets()" title="Tutup" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-subtle);">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="sheet-body" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; max-height: calc(85vh - 70px); overflow-y: auto;">
+        
+        <!-- Kartu Profil Pengguna Aktif -->
+        <div style="background: linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(99,102,241,0.05) 100%); border: 1px solid rgba(37,99,235,0.22); border-radius: var(--radius-lg); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+            <div class="avatar-circle" style="background-color: ${currentUser.color || '#2563EB'}; width: 44px; height: 44px; font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+              ${currentUser.initials || 'U'}
+            </div>
+            <div style="min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-heading); margin: 0; line-height: 1.2;">${currentUser.name}</h4>
+                <span style="font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: rgba(37,99,235,0.12); color: var(--brand-primary); font-weight: 600;">
+                  ${currentUser.role}
+                </span>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-muted); margin: 4px 0 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                ${currentUser.email}
+              </p>
+            </div>
+          </div>
+          <span class="status-badge safe" style="flex-shrink: 0; font-size: 11px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #10B981; display: inline-block;"></span>
+            Aktif
+          </span>
+        </div>
+
+        <!-- Tombol Aksi Utama: LOGOUT (Mencolok) & Navigasi -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" class="btn btn-danger" id="btnProfileModalLogout" onclick="App.logout()" style="width: 100%; justify-content: center; gap: 8px; font-weight: 600; padding: 11px 16px; border-radius: var(--radius-md); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.22); cursor: pointer; display: flex; align-items: center; font-size: 13.5px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Keluar dari Akun (Logout)</span>
+          </button>
+
+          <!-- Tautan Navigasi Cepat -->
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; gap: 6px;" onclick="App.goToProfileNav('users')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+              </svg>
+              <span>Kelola Akun</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; gap: 6px;" onclick="App.goToProfileNav('settings')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Pengaturan</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pemisah & Daftar Ganti Akun Demo (Uji Akses RBAC) -->
+        <div style="border-top: 1px solid var(--border-light); padding-top: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-subtle);">
+              Ganti Akun Demo (Uji Akses RBAC):
+            </span>
+            <span style="font-size: 11px; color: var(--brand-primary); font-weight: 600;">Klik untuk beralih</span>
+          </div>
+          <div class="user-select-list" id="userSelectionList" style="display: flex; flex-direction: column; gap: 4px;">
+            ${usersListHtml}
+          </div>
+        </div>
+
+      </div>
+    `;
 
     backdrop.classList.add('active');
     sheet.classList.add('active');
+  },
+
+  goToProfileNav(target) {
+    this.closeAllSheets();
+    if (target === 'users') {
+      if (document.getElementById('viewUsers') && (!window.location.pathname.includes('.html') || window.location.pathname.endsWith('index.html'))) {
+        this.switchView('viewUsers');
+      } else {
+        window.location.href = 'akun.html';
+      }
+    } else if (target === 'settings') {
+      if (document.getElementById('viewSettings') && (!window.location.pathname.includes('.html') || window.location.pathname.endsWith('index.html'))) {
+        this.switchView('viewSettings');
+      } else {
+        window.location.href = 'pengaturan.html';
+      }
+    }
   },
 
   switchUser(userId) {
